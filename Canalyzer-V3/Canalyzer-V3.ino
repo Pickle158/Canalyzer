@@ -78,6 +78,7 @@ void setup() {
   pinMode(SAVE_BUTTON_PIN, INPUT_PULLUP);
   pinMode(TEST_BUTTON_PIN, INPUT_PULLUP);
   lcd.begin(16, 2);
+  analogWrite(6,125);
   nMsg("Initializing...", "");
 
   //setup mcp thingy
