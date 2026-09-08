@@ -36,16 +36,17 @@ const int EEPROM_COUNT_ADDRESS = 2;
 const int EEPROM_DEVICE_LIST_ADDRESS = 4;
 
 uint16_t savedDevices[MAX_DEVICES];
-int savedDeviceCount = 0;
+uint8_t savedDeviceCount = 0;
 
 uint16_t detectedDevices[MAX_DEVICES];
-int detectedDeviceCount = 0;
+uint8_t detectedDeviceCount = 0;
 
 
 // ===================================FUNCTION DECLARATIONS============================================
 
 
-void nMsg(String top, String bottom = "");
+void nMsg(const char* top, const char* bottom = nullptr);
+void printCountLine(uint8_t count, const char* label = "");
 
 void saveKnownGoodBus();
 bool loadSavedBus();
@@ -55,7 +56,7 @@ void testBus();
 void clearDetectedDevices();
 void processCANMessage();
 
-bool deviceAlreadyStored(uint16_t *array, int count, uint16_t key);
+bool deviceAlreadyStored(uint16_t *array, uint8_t count, uint16_t key);
 void addDetectedDevice(uint16_t key);
 
 uint16_t makeDeviceKey(uint8_t deviceType, uint8_t deviceNumber);
@@ -102,8 +103,8 @@ void setup() {
     Serial.print(savedDeviceCount);
     Serial.println(" saved devices.");
 
-    nMsg("Saved Bus Loaded",
-         String(savedDeviceCount) + " Devices");
+    nMsg("Saved Bus Loaded", "");
+    printCountLine(savedDeviceCount);
     delay(1500);
 
   } else {
@@ -221,8 +222,8 @@ uint16_t makeDeviceKey(uint8_t deviceType, uint8_t deviceNumber) {
 }
 
 //check if its already stored
-bool deviceAlreadyStored(uint16_t *array, int count, uint16_t key) {
-  for (int i = 0; i < count; i++) {
+bool deviceAlreadyStored(uint16_t *array, uint8_t count, uint16_t key) {
+  for (uint8_t i = 0; i < count; i++) {
     if (array[i] == key) {
       return true;
     }
@@ -262,7 +263,7 @@ void clearDetectedDevices() {
 
   detectedDeviceCount = 0;
 
-  for (int i = 0; i < MAX_DEVICES; i++) {
+  for (uint8_t i = 0; i < MAX_DEVICES; i++) {
     detectedDevices[i] = 0;
   }
 }
@@ -311,7 +312,7 @@ void saveKnownGoodBus() {
 
   int address = EEPROM_DEVICE_LIST_ADDRESS;
 
-  for (int i = 0; i < savedDeviceCount; i++) {
+  for (uint8_t i = 0; i < savedDeviceCount; i++) {
     EEPROM.put(address, savedDevices[i]);
     address += sizeof(uint16_t);
   }
@@ -327,7 +328,8 @@ void saveKnownGoodBus() {
 
   // LCD
 
-  nMsg("Bus Saved!", String(savedDeviceCount) + " Devices");
+  nMsg("Bus Saved!", "");
+  printCountLine(savedDeviceCount);
   delay(2500);
   nMsg("Ready", "SAVE or TEST");
 }
@@ -336,7 +338,7 @@ void saveKnownGoodBus() {
 //if it works dont touch this shit
 bool loadSavedBus() {
   uint16_t magic;
-  int count;
+  uint8_t count;
 
   EEPROM.get(EEPROM_MAGIC_ADDRESS, magic);
 
@@ -346,7 +348,7 @@ bool loadSavedBus() {
 
   EEPROM.get(EEPROM_COUNT_ADDRESS, count);
 
-  if (count <= 0 || count > MAX_DEVICES) {
+  if (count == 0 || count > MAX_DEVICES) {
     return false;
   }
 
@@ -357,7 +359,7 @@ bool loadSavedBus() {
   int address = EEPROM_DEVICE_LIST_ADDRESS;
 
 
-  for (int i = 0; i < savedDeviceCount; i++) {
+  for (uint8_t i = 0; i < savedDeviceCount; i++) {
 
     EEPROM.get(
       address,
@@ -404,11 +406,11 @@ void testBus() {
   }
 
   //count missing devices
-  int missingCount = 0;
+  uint8_t missingCount = 0;
 
   uint16_t firstMissing = 0;
 
-  for (int i = 0; i < savedDeviceCount; i++) {
+  for (uint8_t i = 0; i < savedDeviceCount; i++) {
     if (!deviceAlreadyStored(detectedDevices, detectedDeviceCount, savedDevices[i])) {
       if (missingCount == 0) {
         firstMissing = savedDevices[i];
@@ -458,7 +460,7 @@ void testBus() {
 
   // Print EVERY missing device to Serial
 
-  for (int i = 0; i < savedDeviceCount; i++) {
+  for (uint8_t i = 0; i < savedDeviceCount; i++) {
 
     if (!deviceAlreadyStored(
           detectedDevices,
@@ -484,15 +486,13 @@ void testBus() {
     firstMissing & 0x3F;
 
 
-  nMsg(
-    "CAN BUS TEST",
-    String(detectedDeviceCount) +
-    "/" +
-    String(savedDeviceCount) +
-    " MISSING " +
-    String(missingNumber)
-  );
-
+  nMsg("CAN BUS TEST", "");
+  lcd.setCursor(0, 1);
+  lcd.print(detectedDeviceCount);
+  lcd.print('/');
+  lcd.print(savedDeviceCount);
+  lcd.print(" MISSING ");
+  lcd.print(missingNumber);
 
   delay(4000);
 
@@ -500,9 +500,9 @@ void testBus() {
 }
 
 
-void printDeviceList(uint16_t *array, int count) {
+void printDeviceList(uint16_t *array, uint8_t count) {
 
-  for (int i = 0; i < count; i++) {
+  for (uint8_t i = 0; i < count; i++) {
 
     uint8_t deviceNumber =
       array[i] & 0x3F;
@@ -518,6 +518,16 @@ void printDeviceList(uint16_t *array, int count) {
   }
 }
 
+void printCountLine(uint8_t count, const char* label) {
+  lcd.setCursor(0, 1);
+  if (label != nullptr && *label != '\0') {
+    lcd.print(label);
+    lcd.print(' ');
+  }
+  lcd.print(count);
+  lcd.print(" Devices");
+}
+
 //button handler
 bool buttonPressed(int pin) {
 
@@ -531,10 +541,10 @@ bool buttonPressed(int pin) {
 }
 
 //absolutely genius function made by yours truly
-void nMsg(String tcom, String bcom) {
+void nMsg(const char* tcom, const char* bcom) {
   lcd.clear();
   lcd.print(tcom);
-  if (bcom != "") {
+  if (bcom != nullptr && *bcom != '\0') {
     lcd.setCursor(0, 1);
     lcd.print(bcom);
   }
