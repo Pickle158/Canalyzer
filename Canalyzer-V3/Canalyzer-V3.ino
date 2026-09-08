@@ -1,4 +1,4 @@
-#include "arduino_secrets.h"
+
 
 #include <CAN.h>
 #include <EEPROM.h>
@@ -152,7 +152,7 @@ void loop() {
   }
 }
 
-
+// =========================================================FUNCTIONS=============================================
 
 void processCANMessage() {
 
@@ -186,7 +186,7 @@ void processCANMessage() {
   //add it to current list if not there already
   addDetectedDevice(deviceKey);
 }
-
+//=====================================================================
 
 //parse
 uint8_t getDeviceNumber(uint32_t canId) {
@@ -194,20 +194,22 @@ uint8_t getDeviceNumber(uint32_t canId) {
 
   return (uint8_t)(canId & 0x3F);
 }
-
+//=====================================================================
 
 uint8_t getManufacturer(uint32_t canId) {
 
   // FRC CAN manufacturer field
   return (uint8_t)((canId >> 16) & 0xFF);
 }
-
+//=====================================================================
 
 uint8_t getDeviceType(uint32_t canId) {
 
   //frc can device type  (occ. bits 24-28)
   return (uint8_t)((canId >> 24) & 0x1F);
 }
+
+//=====================================================================
 
 //make device key to store in eeprom
 uint16_t makeDeviceKey(uint8_t deviceType, uint8_t deviceNumber) {
@@ -220,6 +222,7 @@ uint16_t makeDeviceKey(uint8_t deviceType, uint8_t deviceNumber) {
 */
   return ((uint16_t)deviceType << 6) | deviceNumber;
 }
+//=====================================================================
 
 //check if its already stored
 bool deviceAlreadyStored(uint16_t *array, uint8_t count, uint16_t key) {
@@ -230,6 +233,7 @@ bool deviceAlreadyStored(uint16_t *array, uint8_t count, uint16_t key) {
   }
   return false;
 }
+//=====================================================================
 
 //look at the name for this one dumbass
 void addDetectedDevice(uint16_t key) {
@@ -258,6 +262,9 @@ void addDetectedDevice(uint16_t key) {
   Serial.println(deviceNumber);
 }
 
+
+//=====================================================================
+
 //the fuck do you think this one does
 void clearDetectedDevices() {
 
@@ -267,6 +274,7 @@ void clearDetectedDevices() {
     detectedDevices[i] = 0;
   }
 }
+//=====================================================================
 
 //save the BUS to EEPROM
 void saveKnownGoodBus() {
@@ -334,6 +342,8 @@ void saveKnownGoodBus() {
   nMsg("Ready", "SAVE or TEST");
 }
 
+//=====================================================================
+
 //yeah no i have no fucking idea how it works
 //if it works dont touch this shit
 bool loadSavedBus() {
@@ -373,6 +383,8 @@ bool loadSavedBus() {
   return true;
 }
 
+//=====================================================================
+
 void testBus() {
 
   Serial.println();
@@ -396,7 +408,7 @@ void testBus() {
     //fixes issue where old ids could remain in buffer and f with next test
   clearDetectedDevices();
 
-  nMsg("Testing CAN Bus", "Please Wait");
+  nMsg("Canalyzing", "Please Wait");
 
   //listen for 2 sec
   unsigned long startTime = millis();
@@ -420,7 +432,7 @@ void testBus() {
   }
 
   //do this if all is well  (0.0001% chance *insert steph curry shooting basketball from moon gif here*)
-  //(á¶áµâ¿ áµáµË¢ áµáµ)
+  //(can bus ok case)
   if (missingCount == 0) {
 
     Serial.println();
@@ -499,6 +511,7 @@ void testBus() {
   nMsg("Ready", "SAVE or TEST");
 }
 
+//=====================================================================
 
 void printDeviceList(uint16_t *array, uint8_t count) {
 
@@ -517,6 +530,7 @@ void printDeviceList(uint16_t *array, uint8_t count) {
     Serial.println(deviceType);
   }
 }
+//=====================================================================
 
 void printCountLine(uint8_t count, const char* label) {
   lcd.setCursor(0, 1);
@@ -527,6 +541,7 @@ void printCountLine(uint8_t count, const char* label) {
   lcd.print(count);
   lcd.print(" Devices");
 }
+//=====================================================================
 
 //button handler
 bool buttonPressed(int pin) {
@@ -539,6 +554,8 @@ bool buttonPressed(int pin) {
 
   return digitalRead(pin) == LOW;
 }
+
+//=====================================================================
 
 //absolutely genius function made by yours truly
 void nMsg(const char* tcom, const char* bcom) {
